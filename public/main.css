@@ -106,3 +106,20 @@ form input[type="submit"] {
 	font-weight: 700;
 	cursor: pointer;
 }
+
+.button {
+	display: block;
+	width: 100%;
+	padding: 15px;
+	margin-top: 15px;
+	border-radius: 8px;
+	background-color: #2F4960;
+	box-shadow: 0px 0px 0px rgba(0, 0, 0, 0);
+	transition: 0.4s;
+	color: #FFF;
+	font-size: 20px;
+	font-weight: 700;
+	cursor: pointer;
+	text-align: center;
+	text-decoration: none;
+}

@@ -7,10 +7,21 @@ const localStrategy		= require('passport-local').Strategy;
 const bcrypt			= require('bcrypt');
 const app				= express();
 
-mongoose.connect("mongodb://localhost:27017/node-auth-yt", {
+// 1st party dependencies
+var configData = require("./config/connection.js");
+
+// Database
+var connectionInfo = configData.getConnectionInfo();
+console.log (connectionInfo.DATABASE_URL);
+mongoose.connect(connectionInfo.DATABASE_URL, {
 	useNewUrlParser: true,
 	useUnifiedTopology: true
 });
+
+//mongoose.connect("mongodbURL", {
+//	useNewUrlParser: true,
+//	useUnifiedTopology: true
+//});
 
 const UserSchema = new mongoose.Schema({
 	username: {

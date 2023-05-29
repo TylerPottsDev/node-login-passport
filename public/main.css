@@ -135,3 +135,11 @@ form input[type="submit"] {
 	text-align: center;
 	text-decoration: none;
 }
+
+.register-link {
+	color:rgb(255, 255, 255);
+	text-decoration: none;
+	text-align: center;
+	padding-top: 25px;
+	font-size: 15px;
+}

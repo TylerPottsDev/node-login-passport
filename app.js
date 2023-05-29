@@ -11,9 +11,10 @@ const app				= express();
 var configData = require("./config/connection.js");
 
 // Database
-var connectionInfo = configData.getConnectionInfo();
-console.log (connectionInfo.DATABASE_URL);
-mongoose.connect(connectionInfo.DATABASE_URL, {
+//var connectionInfo = configData.getConnectionInfo();
+//console.log (connectionInfo.DATABASE_URL);
+
+mongoose.connect(process.env.DATABASE_URL, {
 	useNewUrlParser: true,
 	useUnifiedTopology: true
 });

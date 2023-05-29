@@ -99,16 +99,55 @@ app.get('/about', (req, res) => {
 app.get('/login', isLoggedOut, (req, res) => {
 	const response = {
 		title: "Login",
-		error: req.query.error
+		error: req.query.error,
+		success: req.query.success,
+		userexists: req.query.userexists
 	}
 
 	res.render('login', response);
+});
+
+app.get('/register', isLoggedOut, (req, res) => {
+	const response = {
+		title: "Register",
+		error: req.query.error
+	}
+
+	res.render('register', response);
 });
 
 app.post('/login', passport.authenticate('local', {
 	successRedirect: '/',
 	failureRedirect: '/login?error=true'
 }));
+
+app.post('/register', async (req, res) => {
+	const useremail = req.body.username;
+	const password = req.body.password;
+
+	const exists = await User.exists({ username: useremail });
+
+	if (exists) {
+		res.redirect('/login?userexists=true');
+		return;
+	};
+
+	bcrypt.genSalt(10, function (err, salt) {
+		if (err) return next(err);
+		bcrypt.hash(password, salt, function (err, hash) {
+			if (err) return next(err);
+			
+			const newUser = new User({
+				username: useremail,
+				password: hash
+			});
+
+			newUser.save();
+
+			res.redirect('/login?success=true');
+		});
+	});
+});
 
 app.get('/logout', function (req, res) {
 	req.logout();

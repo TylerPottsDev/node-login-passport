@@ -1,7 +1,11 @@
 <form action="/login" method="post">
 	<div>
 		{{#if error}}
-		<p class="err-msg">Username or password is incorrect</p>
+			<p class="err-msg">Username or password is incorrect</p>
+		{{else if success}}
+			<div class="success"><p>Successfully created account.</p><p>Please log in below.</p></div>
+		{{else if userexists}}
+			<div class="err-msg"><p>Username already exists</p><p>Please log in instead.</p></div>
 		{{/if }}
 		<h1>Login</h1>
 	</div>
@@ -11,7 +15,7 @@
 			type="text" 
 			name="username" 
 			id="username" 
-			placeholder="Enter your username" 
+			placeholder="Enter your email address" 
 			required />
 	</div>
 	<div class="form-group">

@@ -14,15 +14,15 @@ var configData = require("./config/connection.js");
 //var connectionInfo = configData.getConnectionInfo();
 //console.log (connectionInfo.DATABASE_URL);
 
-//mongoose.connect(process.env.DATABASE_URL, {
-//	useNewUrlParser: true,
-//	useUnifiedTopology: true
-//}); 
-
-mongoose.connect("mongodb://webappdatabasetesting-server:FF6qOUPWySsyDgmW83tF9TcZyV8bBAIwUXygsrWHI6zWKsDgNDztmZZGyL8A4h5w2TnKYmkKxucwACDb4SRufA==@webappdatabasetesting-server.mongo.cosmos.azure.com:10255/?ssl=true&replicaSet=globaldb&retrywrites=false&maxIdleTimeMS=120000&appName=@webappdatabasetesting-server@", {
+mongoose.connect(process.env.DATABASE_URL, {
 	useNewUrlParser: true,
 	useUnifiedTopology: true
-});
+}); 
+
+//mongoose.connect("mongodb://webappdatabasetesting-server:FF6qOUPWySsyDgmW83tF9TcZyV8bBAIwUXygsrWHI6zWKsDgNDztmZZGyL8A4h5w2TnKYmkKxucwACDb4SRufA==@webappdatabasetesting-server.mongo.cosmos.azure.com:10255/?ssl=true&replicaSet=globaldb&retrywrites=false&maxIdleTimeMS=120000&appName=@webappdatabasetesting-server@", {
+//	useNewUrlParser: true,
+//	useUnifiedTopology: true
+//});
 
 const UserSchema = new mongoose.Schema({
 	username: {

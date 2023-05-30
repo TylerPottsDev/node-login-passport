@@ -16,13 +16,9 @@ var configData = require("./config/connection.js");
 
 mongoose.connect(process.env.DATABASE_URL, {
 	useNewUrlParser: true,
-	useUnifiedTopology: true
+	useUnifiedTopology: true,
+	dbName: process.env.DATABASE_NAME
 }); 
-
-//mongoose.connect("mongodb://webappdatabasetesting-server:FF6qOUPWySsyDgmW83tF9TcZyV8bBAIwUXygsrWHI6zWKsDgNDztmZZGyL8A4h5w2TnKYmkKxucwACDb4SRufA==@webappdatabasetesting-server.mongo.cosmos.azure.com:10255/?ssl=true&replicaSet=globaldb&retrywrites=false&maxIdleTimeMS=120000&appName=@webappdatabasetesting-server@", {
-//	useNewUrlParser: true,
-//	useUnifiedTopology: true
-//});
 
 const UserSchema = new mongoose.Schema({
 	username: {
@@ -151,8 +147,10 @@ app.post('/register', async (req, res) => {
 });
 
 app.get('/logout', function (req, res) {
-	req.logout();
-	res.redirect('/');
+	req.logout(function(err) {
+		if (err) { return next(err); }
+		res.redirect('/');
+	  });
 });
 
 // Setup our admin user

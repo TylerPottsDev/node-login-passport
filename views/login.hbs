@@ -6,13 +6,15 @@
 			<div class="success"><p>Successfully created account.</p><p>Please log in below.</p></div>
 		{{else if userexists}}
 			<div class="err-msg"><p>Username already exists</p><p>Please log in instead.</p></div>
+		{{else if invalidemail}}
+		<div class="err-msg"><p>Invalid email address</p></div>
 		{{/if }}
 		<h1>Login</h1>
 	</div>
 	<div class="form-group">
 		<label>Username: </label>
 		<input 
-			type="text" 
+			type="email" 
 			name="username" 
 			id="username" 
 			placeholder="Enter your email address" 

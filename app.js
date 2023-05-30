@@ -46,6 +46,20 @@ app.use(session({
 app.use(express.urlencoded({ extended: false }));
 app.use(express.json());
 
+// Middleware function to always convert username into lowercase to match DB entry
+const convertToLowerCase = (req, res, next) => {
+	if (req.body.username) {
+	  req.body.username = req.body.username.toLowerCase();
+	}
+	next();
+};
+
+// Email validation function
+function validateEmail(email) {
+	const emailRegex = /^\S+@\S+\.\S+$/;
+	return emailRegex.test(email);
+}
+
 // Passport.js
 app.use(passport.initialize());
 app.use(passport.session());
@@ -98,7 +112,8 @@ app.get('/login', isLoggedOut, (req, res) => {
 		title: "Login",
 		error: req.query.error,
 		success: req.query.success,
-		userexists: req.query.userexists
+		userexists: req.query.userexists,
+		invalidemail: req.query.invalidemail
 	}
 
 	res.render('login', response);
@@ -113,19 +128,26 @@ app.get('/register', isLoggedOut, (req, res) => {
 	res.render('register', response);
 });
 
-app.post('/login', passport.authenticate('local', {
+app.post('/login', convertToLowerCase, passport.authenticate('local', {
 	successRedirect: '/',
 	failureRedirect: '/login?error=true'
 }));
 
+
+
 app.post('/register', async (req, res) => {
-	const useremail = req.body.username;
+	const useremail = req.body.username.toLowerCase();
 	const password = req.body.password;
 
 	const exists = await User.exists({ username: useremail });
 
 	if (exists) {
 		res.redirect('/login?userexists=true');
+		return;
+	};
+
+	if (!validateEmail(useremail)) {
+		res.redirect('/login?invalidemail=true');
 		return;
 	};
 
@@ -151,32 +173,6 @@ app.get('/logout', function (req, res) {
 		if (err) { return next(err); }
 		res.redirect('/');
 	  });
-});
-
-// Setup our admin user
-app.get('/setup', async (req, res) => {
-	const exists = await User.exists({ username: "admin" });
-
-	if (exists) {
-		res.redirect('/login');
-		return;
-	};
-
-	bcrypt.genSalt(10, function (err, salt) {
-		if (err) return next(err);
-		bcrypt.hash("pass", salt, function (err, hash) {
-			if (err) return next(err);
-			
-			const newAdmin = new User({
-				username: "admin",
-				password: hash
-			});
-
-			newAdmin.save();
-
-			res.redirect('/login');
-		});
-	});
 });
 
 app.listen(8080, () => {

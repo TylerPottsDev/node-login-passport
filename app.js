@@ -7,6 +7,7 @@ const localStrategy		= require('passport-local').Strategy;
 const bcrypt			= require('bcrypt');
 const app				= express();
 const base64url 		= require('base64url');
+const crypto			= require('crypto');
 
 // 1st party dependencies
 var configData = require("./config/connection.js");
@@ -37,6 +38,10 @@ const UserSchema = new mongoose.Schema({
 	lastLogin: {
 		type: Date,
 		required: false
+	},
+	usernamehash: {
+		type: String,
+		required: false
 	}
 });
 
@@ -62,6 +67,13 @@ const convertToLowerCase = (req, res, next) => {
 	}
 	next();
 };
+
+// Middleware function to convert a value to a SHA-256 hash
+function sha256Hash(value) {
+	const hash = crypto.createHash('sha256');
+	hash.update(value);
+	return hash.digest('hex');
+}
 
 // Email validation function
 function validateEmail(email) {
@@ -188,7 +200,8 @@ app.post('/register', async (req, res) => {
 				username: useremail,
 				password: hash,
 				token: null,
-				lastLogin: new Date() 
+				lastLogin: new Date(),
+				usernamehash: sha256Hash(useremail)
 			});
 
 			newUser.save();
@@ -217,7 +230,6 @@ app.get('/reset', isLoggedOut, (req, res) => {
 app.post('/reset', async (req, res) => {
 	const useremail = req.body.username.toLowerCase();
 	const user = await User.findOne({username: useremail});
-	//const exists = await User.exists({ username: useremail });
 	
 	// Don't do anything if user doesn't exist
 	if (!user) {
@@ -241,14 +253,15 @@ app.post('/reset', async (req, res) => {
 	const lastLogin = user.lastLogin.getTime();
 	const token = `${date}${user.password}${lastLogin}${user.username}`;
 	console.log("Original token: ",token);
+	const SHA256token = sha256Hash(token);
 	var hashedToken = "";
-	var hashedUsername = user.username;
+	var hashedUsername = user.usernamehash;
 	
 
 	// Salt and hash the token
 	bcrypt.genSalt(10, function (err, salt) {
 		if (err) return next(err);
-		bcrypt.hash(token, salt, function (err, hash) {
+		bcrypt.hash(SHA256token, salt, function (err, hash) {
 			if (err) return next(err);
 
 			// Convert to a base64url so it doesn't include any slashes
@@ -295,7 +308,7 @@ app.get('/reset/:identity/:token', isLoggedOut, async (req, res) => {
 		token: req.params.token
 	}
 	
-	const user = await User.findOne({username: identity});
+	const user = await User.findOne({usernamehash: identity});
 	// Don't do anything if user doesn't exist
 	if (!user) {
 		console.log ("User not found");
@@ -309,8 +322,9 @@ app.get('/reset/:identity/:token', isLoggedOut, async (req, res) => {
 	const lastLogin = user.lastLogin.getTime();
 	const newtoken = `${date}${user.password}${lastLogin}${user.username}`;
 	console.log("New token before hashing: ",newtoken);
+	const SHA256newtoken = sha256Hash(newtoken);
 	// Compare tokens to see if they match. If they don't, the password reset link should be invalid.
-	bcrypt.compare(newtoken, token, function(err, result) {
+	bcrypt.compare(SHA256newtoken, token, function(err, result) {
 		console.log(result);
 		if (err) return next(err);
 

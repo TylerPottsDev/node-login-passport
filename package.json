@@ -12,6 +12,7 @@
   "dependencies": {
     "base64url": "^3.0.1",
     "bcrypt": "^5.0.0",
+    "crypto": "^1.0.1",
     "dotenv": "^16.0.3",
     "express": "^4.17.1",
     "express-handlebars": "^5.2.0",

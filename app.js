@@ -242,6 +242,7 @@ app.post('/reset', async (req, res) => {
 	const token = `${date}${user.password}${lastLogin}${user.username}`;
 	console.log("Original token: ",token);
 	var hashedToken = "";
+	var hashedUsername = user.username;
 	
 
 	// Salt and hash the token
@@ -262,7 +263,7 @@ app.post('/reset', async (req, res) => {
 					else {
 						console.log('Set token for ', user.username);
 						const host = req.headers.host;
-						const resetURL = host+"/reset/"+user._id+"/"+hashedToken;
+						const resetURL = host+"/reset/"+hashedUsername+"/"+hashedToken;
 						console.log("Reset URL: ", resetURL);
 					}
 				}
@@ -279,12 +280,14 @@ app.post('/reset', async (req, res) => {
 
 // Route for user to enter new password after clicking link
 app.get('/reset/:identity/:token', isLoggedOut, async (req, res) => {
-	identity = req.params.identity;
-	urlSafeToken = req.params.token;
+	const urlSafeIdentity = req.params.identity;
+	const urlSafeToken = req.params.token;
 
 	//Convert from URL-safe hash back to a bcrypt hash
 	const token = base64url.toBase64(urlSafeToken);
-	console.log("Token from URL: ",token);
+	const identity = urlSafeIdentity;
+	console.log("Token from URL: ",token," and identity: ", identity);
+
 
 	const response = {
 		title: "Reset Password",
@@ -292,10 +295,11 @@ app.get('/reset/:identity/:token', isLoggedOut, async (req, res) => {
 		token: req.params.token
 	}
 	
-	const user = await User.findOne({_id: identity});
+	const user = await User.findOne({username: identity});
 	// Don't do anything if user doesn't exist
 	if (!user) {
-		res.redirect('/login?invalidemail=true');
+		console.log ("User not found");
+		res.redirect('/login?expired=true');
 		return;
 	};
 

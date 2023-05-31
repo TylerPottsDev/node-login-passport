@@ -187,7 +187,8 @@ app.post('/register', async (req, res) => {
 			const newUser = new User({
 				username: useremail,
 				password: hash,
-				token: null
+				token: null,
+				lastLogin: new Date() 
 			});
 
 			newUser.save();
@@ -260,7 +261,8 @@ app.post('/reset', async (req, res) => {
 					}
 					else {
 						console.log('Set token for ', user.username);
-						const resetURL = "//localhost:8080/reset/"+user._id+"/"+hashedToken;
+						const host = req.headers.host;
+						const resetURL = host+"/reset/"+user._id+"/"+hashedToken;
 						console.log("Reset URL: ", resetURL);
 					}
 				}

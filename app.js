@@ -137,7 +137,8 @@ app.get('/login', isLoggedOut, (req, res) => {
 		userexists: req.query.userexists,
 		invalidemail: req.query.invalidemail,
 		reset: req.query.reset,
-		expired: req.query.expired
+		expired: req.query.expired,
+		resetsuccess: req.query.resetsuccess
 	}
 	res.render('login', response);
 });
@@ -234,7 +235,7 @@ app.post('/reset', async (req, res) => {
 	
 	// Don't do anything if user doesn't exist
 	if (!user) {
-		res.redirect('/login?invalidemail=true');
+		res.redirect('/login?resetsuccess=true');
 		return;
 	};
 
@@ -289,13 +290,9 @@ app.post('/reset', async (req, res) => {
 					}
 				}
 			);
-			res.redirect('/'); //TODO Add success message that reset email was sent. 
+			res.redirect('/login?resetsuccess=true'); //TODO Add success message that reset email was sent. 
 		});
 	});
-
-	
-
-	// Send email with token to reset password
 	
 });
 
@@ -356,7 +353,7 @@ app.post('/resetpassword', isLoggedOut, async (req, res) => {
 	// Validate that there is a single user with that token, then render password reset page
 	User.findOne({token: token}, 'username', function (err, user) {
 		if (err) {
-			res.redirect('/login?invalidemail=true');
+			res.redirect('/login?expired=true');
 		}
 
 		if (user) {
@@ -377,6 +374,15 @@ app.post('/resetpassword', isLoggedOut, async (req, res) => {
 							}
 							else {
 								console.log ("Updated Docs: ", docs);
+								
+								const host = req.headers.host;
+								const resetURL = "https://"+host+"/reset/";
+								mailer.sendEmail({ 
+									from: "SimpleWave <noreply@dev.simplewave.ca>", 
+									to: username, 
+									subject: "Your password has been recently changed", 
+									html: "Your SimpleWave password has been recently changed. If this wasn't you, please reset your password here: " + resetURL
+								});
 							}
 					});
 					res.redirect('/login?reset=true');

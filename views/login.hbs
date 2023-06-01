@@ -12,6 +12,8 @@
 			<div class="success"><p>Password successfully reset.</p></div>
 		{{else if expired}}
 			<div class="err-msg"><p>This link may have expired. Please reset your password again.</p></div>
+		{{else if resetsuccess}}
+			<div class="success"><p>Please check your email for a password reset link.</p></div>
 		{{/if }}
 		<h1>Login</h1>
 	</div>

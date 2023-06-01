@@ -11,6 +11,7 @@ const crypto			= require('crypto');
 
 // 1st party dependencies
 var configData = require("./config/connection.js");
+var mailer = require("./config/sendmail.js");
 
 // Database
 //var connectionInfo = configData.getConnectionInfo();
@@ -53,7 +54,7 @@ app.engine('hbs', hbs({ extname: '.hbs' }));
 app.set('view engine', 'hbs');
 app.use(express.static(__dirname + '/public'));
 app.use(session({
-	secret: "verygoodsecret",
+	secret: process.env.SESSION_SECRET, // Any random hash will do
 	resave: false,
 	saveUninitialized: true
 }));
@@ -75,7 +76,7 @@ function sha256Hash(value) {
 	return hash.digest('hex');
 }
 
-// Email validation function
+// Middleware function to validate an email address against regex
 function validateEmail(email) {
 	const emailRegex = /^\S+@\S+\.\S+$/;
 	return emailRegex.test(email);
@@ -138,14 +139,14 @@ app.get('/login', isLoggedOut, (req, res) => {
 		reset: req.query.reset,
 		expired: req.query.expired
 	}
-
 	res.render('login', response);
 });
 
 app.get('/register', isLoggedOut, (req, res) => {
 	const response = {
 		title: "Register",
-		error: req.query.error
+		error: req.query.error,
+		hash: process.env.SESSION_SECRET
 	}
 
 	res.render('register', response);
@@ -276,12 +277,19 @@ app.post('/reset', async (req, res) => {
 					else {
 						console.log('Set token for ', user.username);
 						const host = req.headers.host;
-						const resetURL = host+"/reset/"+hashedUsername+"/"+hashedToken;
-						console.log("Reset URL: ", resetURL);
+						const resetURL = "https://"+host+"/reset/"+hashedUsername+"/"+hashedToken;
+						//console.log("Reset URL: ", resetURL);
+
+						mailer.sendEmail({ 
+							from: "SimpleWave <noreply@dev.simplewave.ca>", 
+							to: useremail, 
+							subject: "SimpleWave Password Reset", 
+							html: "Here is your link to reset your password: " + resetURL
+						});
 					}
 				}
 			);
-			res.redirect('/');
+			res.redirect('/'); //TODO Add success message that reset email was sent. 
 		});
 	});
 

@@ -1,4 +1,10 @@
-<form action="/register" method="post">
+<script>
+   function onSubmit(token) {
+    document.getElementById("register-form").submit();
+   }
+</script>
+
+<form action="/register" id="register-form" method="post">
 	<div>
 		{{#if error}}
 		<p class="err-msg">Username or password is incorrect</p>
@@ -23,7 +29,14 @@
 			placeholder="Create a password" 
 			required />
 	</div>
-	<div>
-		<input type="submit" value="Register" />
-	</div>
+
+	<input class="g-recaptcha" 
+        data-sitekey="6LccilwmAAAAAH0fmh5S4Ug6QhisVEtE_5InqFrI" 
+        data-callback='onSubmit' 
+        data-action='submit'
+		type="submit"
+		value="Register">
+	</input>
+
 </form>
+

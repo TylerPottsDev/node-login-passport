@@ -1,4 +1,10 @@
-<form action="/login" method="post">
+<script>
+   function onSubmit(token) {
+    document.getElementById("login-form").submit();
+   }
+</script>
+
+<form action="/login" method="post" id="login-form">
 	<div>
 		{{#if error}}
 			<p class="err-msg">Username or password is incorrect.</p>
@@ -36,7 +42,13 @@
 			required />
 	</div>
 	<div>
-		<input type="submit" value="Login" />
+		<input class="g-recaptcha" 
+			data-sitekey="6LccilwmAAAAAH0fmh5S4Ug6QhisVEtE_5InqFrI" 
+			data-callback='onSubmit' 
+			data-action='submit'
+			type="submit"
+			value="Login">
+		</input>
 	</div>
 	<div class="register-link">
 		<p>Don't have an account? <a href="register">Register Here</a></p>

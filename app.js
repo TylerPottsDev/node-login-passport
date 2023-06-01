@@ -8,10 +8,12 @@ const bcrypt			= require('bcrypt');
 const app				= express();
 const base64url 		= require('base64url');
 const crypto			= require('crypto');
+const axios 			= require('axios');
 
 // 1st party dependencies
 var configData = require("./config/connection.js");
 var mailer = require("./config/sendmail.js");
+var recaptcha = require("./config/recaptcha.js");
 
 // Database
 //var connectionInfo = configData.getConnectionInfo();
@@ -153,7 +155,7 @@ app.get('/register', isLoggedOut, (req, res) => {
 	res.render('register', response);
 });
 
-app.post('/login', convertToLowerCase, passport.authenticate('local', {	
+app.post('/login', convertToLowerCase, recaptcha.recaptchaVerification, passport.authenticate('local', {	
 	successRedirect: '/update-last-login',
 	failureRedirect: '/login?error=true'
 }));
@@ -177,10 +179,11 @@ app.get('/update-last-login', isLoggedIn, function(req, res) {
 
 
 
-app.post('/register', async (req, res) => {
+app.post('/register', recaptcha.recaptchaVerification, async (req, res) => {
 	const useremail = req.body.username.toLowerCase();
 	const password = req.body.password;
-
+	
+	// Proceed with registration
 	const exists = await User.exists({ username: useremail });
 
 	if (exists) {

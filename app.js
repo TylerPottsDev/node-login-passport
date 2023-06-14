@@ -84,6 +84,12 @@ function validateEmail(email) {
 	return emailRegex.test(email);
 }
 
+// Middleware function to validate a password against complexity requirements
+function validatePasswordStrength(password) {
+	const complexityRegex = /^(?=.*\d)(?=.*[a-z])(?=.*[A-Z]).{8,}$/;
+	return complexityRegex.test(password);
+}
+
 // Passport.js
 app.use(passport.initialize());
 app.use(passport.session());
@@ -182,6 +188,11 @@ app.get('/update-last-login', isLoggedIn, function(req, res) {
 app.post('/register', recaptcha.recaptchaVerification, async (req, res) => {
 	const useremail = req.body.username.toLowerCase();
 	const password = req.body.password;
+
+	if (!validateEmail(useremail) || !validatePasswordStrength(password)) {
+		res.redirect('/login?invalidemail=true&password=false');
+		return;
+	};
 	
 	// Proceed with registration
 	const exists = await User.exists({ username: useremail });
@@ -191,10 +202,7 @@ app.post('/register', recaptcha.recaptchaVerification, async (req, res) => {
 		return;
 	};
 
-	if (!validateEmail(useremail)) {
-		res.redirect('/login?invalidemail=true');
-		return;
-	};
+	
 
 	bcrypt.genSalt(10, function (err, salt) {
 		if (err) return next(err);

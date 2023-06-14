@@ -12,6 +12,8 @@ const recaptchaVerification = async (req, res, next) => {
             }
         });
 
+        //console.log(response.data.score);
+
         if (response.data.success && response.data.score >= 0.5) {
             next();
         }

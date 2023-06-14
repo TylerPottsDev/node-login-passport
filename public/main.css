@@ -119,6 +119,10 @@ form input[type="submit"] {
 	cursor: pointer;
 }
 
+form a {
+	color:#113e39;
+}
+
 .button {
 	display: block;
 	width: 100%;

@@ -7,12 +7,14 @@
 <form action="/login" method="post" id="login-form">
 	<div>
 		{{#if error}}
-			<p class="err-msg">Username or password is incorrect.</p>
+			<p class="err-msg">Username or Password is incorrect.</p>
+		{{else if customerror}}
+			<p class="err-msg">{{ customerror }}</p>
 		{{else if success}}
 			<div class="success"><p>Successfully created account.</p><p>Please log in below.</p></div>
-		{{else if userexists}}
+		{{else if userexists}} <!-- This can be deprecated --> 
 			<div class="err-msg"><p>Username already exists</p><p>Please log in instead.</p></div>
-		{{else if invalidemail}}
+		{{else if invalidemail}}  <!-- This can be deprecated -->
 			<div class="err-msg"><p>Invalid email address.</p></div>
 		{{else if reset}}
 			<div class="success"><p>Password successfully reset.</p></div>

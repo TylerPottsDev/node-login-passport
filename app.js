@@ -130,7 +130,7 @@ function isLoggedOut(req, res, next) {
 
 // ROUTES
 app.get('/', isLoggedIn, (req, res) => {
-	res.render("index", { title: "Home" });
+	res.render("index", { title: "Home", user: req.user._doc});
 });
 
 app.get('/about', (req, res) => {
@@ -154,7 +154,6 @@ app.get('/login', isLoggedOut, (req, res) => {
 app.get('/register', isLoggedOut, (req, res) => {
 	const response = {
 		title: "Register",
-		error: req.query.error,
 		hash: process.env.SESSION_SECRET
 	}
 
@@ -189,8 +188,13 @@ app.post('/register', recaptcha.recaptchaVerification, async (req, res) => {
 	const useremail = req.body.username.toLowerCase();
 	const password = req.body.password;
 
-	if (!validateEmail(useremail) || !validatePasswordStrength(password)) {
-		res.redirect('/login?invalidemail=true&password=false');
+	if (!validateEmail(useremail)) {
+		res.render('register', {error: "Invalid Email Address"});
+		return;
+	};
+
+	if (!validatePasswordStrength(password)) {
+		res.render('register', {error: "Password must be 8+ characters, contain at least 1 capital letter, 1 lowercase letter, and a number."});
 		return;
 	};
 	
@@ -198,7 +202,7 @@ app.post('/register', recaptcha.recaptchaVerification, async (req, res) => {
 	const exists = await User.exists({ username: useremail });
 
 	if (exists) {
-		res.redirect('/login?userexists=true');
+		res.render('login', {customerror: "Username or Password incorrect. Please log in instead."});
 		return;
 	};
 
@@ -259,75 +263,58 @@ app.post('/reset', async (req, res) => {
 
 		If any of the above changes, the password reset link shouldn't work
 	*/
+
 	const timestamp = new Date();
 	// Convert to just today's date without the HH:mm:ss. The token should be valid for only today.
 	const date = timestamp.toISOString().split('T')[0]; 
 	// Convert lastLogin to milliseconds
 	const lastLogin = user.lastLogin.getTime();
 	const token = `${date}${user.password}${lastLogin}${user.username}`;
-	console.log("Original token: ",token);
+	//console.log("Original token: ",token);
 	const SHA256token = sha256Hash(token);
-	var hashedToken = "";
 	var hashedUsername = user.usernamehash;
-	
 
-	// Salt and hash the token
-	bcrypt.genSalt(10, function (err, salt) {
-		if (err) return next(err);
-		bcrypt.hash(SHA256token, salt, function (err, hash) {
-			if (err) return next(err);
+	// Set the token on the user
+	User.updateOne({username: useremail}, 
+		{$set: { token: SHA256token}}, 
+		function (err, docs) {
+			if (err) {
+				console.log(err)
+			}
+			else {
+				console.log('Set password reset token for ', user.username);
+				const host = req.headers.host;
+				const resetURL = "https://"+host+"/reset/"+hashedUsername+"/"+SHA256token;
+				console.log("Reset URL: ", resetURL);
 
-			// Convert to a base64url so it doesn't include any slashes
-			hashedToken = base64url.fromBase64(hash);
-
-			User.updateOne({username: useremail}, 
-				{$set: { token: hashedToken}}, 
-				function (err, docs) {
-					if (err) {
-						console.log(err)
-					}
-					else {
-						console.log('Set token for ', user.username);
-						const host = req.headers.host;
-						const resetURL = "https://"+host+"/reset/"+hashedUsername+"/"+hashedToken;
-						//console.log("Reset URL: ", resetURL);
-
-						mailer.sendEmail({ 
-							from: "SimpleWave <noreply@dev.simplewave.ca>", 
-							to: useremail, 
-							subject: "SimpleWave Password Reset", 
-							html: "Here is your link to reset your password: " + resetURL
-						});
-					}
-				}
-			);
-			res.redirect('/login?resetsuccess=true'); //TODO Add success message that reset email was sent. 
-		});
-	});
-	
+				mailer.sendEmail({ 
+					from: "SimpleWave <noreply@dev.simplewave.ca>", 
+					to: useremail, 
+					subject: "SimpleWave Password Reset", 
+					html: "Here is your link to reset your password: " + resetURL
+				});
+			}
+		}
+	);
+	res.redirect('/login?resetsuccess=true');
 });
 
 // Route for user to enter new password after clicking link
 app.get('/reset/:identity/:token', isLoggedOut, async (req, res) => {
-	const urlSafeIdentity = req.params.identity;
-	const urlSafeToken = req.params.token;
-
-	//Convert from URL-safe hash back to a bcrypt hash
-	const token = base64url.toBase64(urlSafeToken);
-	const identity = urlSafeIdentity;
-	console.log("Token from URL: ",token," and identity: ", identity);
-
+	const identity = req.params.identity;
+	const token = req.params.token;
+	//console.log("Token from URL: ",token," and identity: ", identity);
 
 	const response = {
 		title: "Reset Password",
 		error: req.query.error,
-		token: req.params.token
+		token: token
 	}
 	
 	const user = await User.findOne({usernamehash: identity});
 	// Don't do anything if user doesn't exist
 	if (!user) {
-		console.log ("User not found");
+		console.log ("User not found - user hash doesn't match any user.");
 		res.redirect('/login?expired=true');
 		return;
 	};
@@ -337,29 +324,32 @@ app.get('/reset/:identity/:token', isLoggedOut, async (req, res) => {
 	const date = timestamp.toISOString().split('T')[0]; // convert to just today's date without the HH:mm:ss
 	const lastLogin = user.lastLogin.getTime();
 	const newtoken = `${date}${user.password}${lastLogin}${user.username}`;
-	console.log("New token before hashing: ",newtoken);
+	//console.log("New token before hashing: ",newtoken);
 	const SHA256newtoken = sha256Hash(newtoken);
-	// Compare tokens to see if they match. If they don't, the password reset link should be invalid.
-	bcrypt.compare(SHA256newtoken, token, function(err, result) {
-		console.log(result);
-		if (err) return next(err);
+	console.log("Freshly hashed token to compare with token passed in URL: ",SHA256newtoken);
+	
+	if (SHA256newtoken == token) {
+		console.log("Hashes match. Proceeding to let user reset password.");
+		res.render('resetpassword', response);
+	}
 
-		if (result) {
-			console.log("Hashes match. Proceeding.");
-			res.render('resetpassword', response);
-		}
-
-		else {
-			// Token is not valid anymore
-			res.redirect('/login?expired=true');
-		}
-	});
+	else {
+		// Token is not valid anymore
+		console.log("Hashes don't match. Token is no longer valid.");
+		res.redirect('/login?expired=true');
+	}
 	
 });
 
 app.post('/resetpassword', isLoggedOut, async (req, res) => {
 	const newpass = req.body.password;
 	const token = req.body.token; 
+
+	// Validate password commplexity
+	if (!validatePasswordStrength(newpass)) {
+		res.render('resetpassword', {customerror: "Password must be 8+ characters, contain at least 1 capital letter, 1 lowercase letter, and a number.", token: token});
+		return;
+	};
 
 	// Validate that there is a single user with that token, then render password reset page
 	User.findOne({token: token}, 'username', function (err, user) {
@@ -386,6 +376,7 @@ app.post('/resetpassword', isLoggedOut, async (req, res) => {
 							else {
 								console.log ("Updated Docs: ", docs);
 								
+								// EXO Rate Limit: 30 messages / min, 10k per day
 								const host = req.headers.host;
 								const resetURL = "https://"+host+"/reset/";
 								mailer.sendEmail({ 

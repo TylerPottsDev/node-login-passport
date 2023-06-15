@@ -6,8 +6,8 @@
 
 <form action="/register" id="register-form" method="post">
 	<div>
-		{{#if error}}
-		<p class="err-msg">Username or password is incorrect</p>
+		{{#if customerror}}
+		<p class="err-msg">{{ customerror }}</p>
 		{{/if }}
 		<h1>Register</h1>
 	</div>

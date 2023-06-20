@@ -189,12 +189,12 @@ app.post('/register', recaptcha.recaptchaVerification, async (req, res) => {
 	const password = req.body.password;
 
 	if (!validateEmail(useremail)) {
-		res.render('register', {error: "Invalid Email Address"});
+		res.render('register', {customerror: "Invalid Email Address"});
 		return;
 	};
 
 	if (!validatePasswordStrength(password)) {
-		res.render('register', {error: "Password must be 8+ characters, contain at least 1 capital letter, 1 lowercase letter, and a number."});
+		res.render('register', {customerror: "Password must be 8+ characters, contain at least 1 capital letter, 1 lowercase letter, and a number."});
 		return;
 	};
 	
@@ -202,7 +202,7 @@ app.post('/register', recaptcha.recaptchaVerification, async (req, res) => {
 	const exists = await User.exists({ username: useremail });
 
 	if (exists) {
-		res.render('login', {customerror: "Username or Password incorrect. Please log in instead."});
+		res.render('login', {customerror: "This account already exists. Please log in instead."});
 		return;
 	};
 

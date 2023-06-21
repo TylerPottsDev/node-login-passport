@@ -399,6 +399,54 @@ app.post('/resetpassword', isLoggedOut, async (req, res) => {
 	});
 });
 
+app.get('/checkout', async (req, res) => {
+	const merchantID = process.env.MERCHANTID; //Converge 6 or 7-Digit Account ID *Not the 10-Digit Elavon Merchant ID*
+	//const merchantUserID = "myfree"; //Converge User ID *MUST FLAG AS HOSTED API USER IN CONVERGE UI*
+	//const merchantPinCode = "5QIKCV"; //Converge PIN (64 CHAR A/N)
+
+	const merchantUserID = process.env.MERCHANTUSERID; //Converge User ID *MUST FLAG AS HOSTED API USER IN CONVERGE UI*
+	const merchantPinCode = process.env.MERCHANTPINCODE; //P Converge PIN (64 CHAR A/N)
+
+	const url = "https://api.demo.convergepay.com/hosted-payments/transaction_token"; // URL to Converge demo session token server
+	//const url = "https://demo.myvirtualmerchant.com/VirtualMerchantDemo/process.do";
+	// POST only url = /virtual-merchant/process.do
+	// const url = "https://api.convergepay.com/hosted-payments/transaction_token"; // URL to Converge production session token server
+
+	/*Payment Field Variables*/
+
+	// In this section, we set variables to be captured by the JavaScript file and passed to Converge in the POST request.
+	//const firstname = req.body.ssl_first_name; //Post first name
+	//const lastname = req.body.ssl_last_name; //Post first name
+	//const amount = req.body.ssl_amount; //Post Tran Amount
+	const amount = 100;
+
+	const data = new URLSearchParams();
+	data.append('ssl_merchant_id', merchantID);
+	data.append('ssl_user_id', merchantUserID);
+	data.append('ssl_pin', merchantPinCode);
+	data.append('ssl_transaction_type', 'CCSALE');
+	data.append('ssl_first_name', 'Test');
+	data.append('ssl_last_name', 'User');
+	data.append('ssl_get_token', 'Y');
+	data.append('ssl_add_token', 'Y');
+	data.append('ssl_amount', amount);
+	//data.append('ssl_show_form', true);
+
+	try {
+		const response = await axios.post(url, data);
+		const sessionToken = response.data;
+		//const sessionToken = "ABCD";
+		console.log(sessionToken);
+		//res.json({ token: sessionToken});
+		//res.render("checkout", { token: sessionToken });
+		res.send(sessionToken); //temp fix to render HTML response from converge
+		//return sessionToken;
+	} catch (error) {
+		console.error(error);
+		res.render("checkout", { token: "FAILED" });
+	}
+});
+
 app.listen(8080, () => {
 	console.log("Listening on port 8080");
 });
